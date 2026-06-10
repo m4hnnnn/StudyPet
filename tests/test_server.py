@@ -158,3 +158,37 @@ def test_delete_task_not_found(client):
     r = client.delete("/tasks/9999")
     assert r.status_code == 404
     assert "not found" in r.json()["detail"]
+
+
+# ---------------------------------------------------------------------------
+# GET /stats
+# ---------------------------------------------------------------------------
+
+def test_get_stats_empty(client):
+    r = client.get("/stats")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["total_tasks"] == 0
+    assert body["completed_tasks"] == 0
+    assert body["pending_tasks"] == 0
+    assert body["completed_today"] == 0
+    assert body["streak_days"] == 0
+
+
+def test_get_stats_after_completion(client):
+    task_id = client.post("/tasks", json={"title": "Stat test"}).json()["id"]
+    client.put(f"/tasks/{task_id}/complete")
+    r = client.get("/stats")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["completed_tasks"] == 1
+    assert body["completed_today"] == 1
+    assert body["streak_days"] == 1
+
+
+def test_get_pet_has_evolution(client):
+    body = client.get("/pet").json()
+    assert "evolution_stage" in body
+    assert "avatar" in body
+    assert body["evolution_stage"] == "Egg"
+    assert body["avatar"] == "🥚"

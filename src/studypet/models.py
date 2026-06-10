@@ -24,9 +24,21 @@ class Pet(BaseModel):
     xp: int
     mood: str
     xp_to_next_level: int
+    evolution_stage: str
+    avatar: str
 
 
 class CompleteTaskResponse(BaseModel):
     task: Task
     pet: Pet
     xp_earned: int
+
+
+class Stats(BaseModel):
+    total_tasks: int
+    completed_tasks: int
+    pending_tasks: int
+    completed_today: int
+    completed_this_week: int
+    streak_days: int
+    avg_per_day_last_7: float

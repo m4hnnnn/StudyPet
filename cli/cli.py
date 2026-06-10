@@ -7,10 +7,10 @@ import httpx
 API_URL = os.environ.get("STUDYPET_URL", "http://localhost:8000")
 
 MOOD_LABEL = {
-    "sad": "(sad)",
-    "okay": "(okay)",
-    "happy": "(happy)",
-    "ecstatic": "(ecstatic!!)",
+    "sad":      "😢",
+    "okay":     "😐",
+    "happy":    "😊",
+    "ecstatic": "🤩",
 }
 
 
@@ -59,7 +59,7 @@ def show_pet() -> None:
         _abort(r.text)
     p = r.json()
     label = MOOD_LABEL.get(p["mood"], "")
-    click.echo(f"\n[PET] {p['name']}")
+    click.echo(f"\n{p['avatar']}  {p['name']}  [{p['evolution_stage']}]")
     click.echo(f"  Level : {p['level']}")
     click.echo(f"  XP    : {p['xp']}  ({p['xp_to_next_level']} to next level)")
     click.echo(f"  Mood  : {p['mood']} {label}\n")
@@ -128,7 +128,7 @@ def complete_task(task_id: int) -> None:
     xp = data["xp_earned"]
     label = MOOD_LABEL.get(pet["mood"], "")
 
-    click.echo(click.style(f"[DONE] Completed: {task['title']}", fg="green"))
+    click.echo(click.style(f"✅ Completed: {task['title']}", fg="green"))
     click.echo(
         f"  +{xp} XP -> {pet['name']} is level {pet['level']} "
         f"({pet['xp']} XP)  mood: {pet['mood']} {label}"
@@ -146,6 +146,23 @@ def delete_task(task_id: int) -> None:
     if r.status_code != 204:
         _abort(r.text)
     click.echo(f"Deleted task {task_id}.")
+
+
+@main.command("stats")
+def show_stats() -> None:
+    """Show productivity statistics."""
+    r = _request("get", "/stats")
+    if r.status_code != 200:
+        _abort(r.text)
+    s = r.json()
+    streak_icon = "🔥" if s["streak_days"] > 0 else "  "
+    click.echo("\n[STATS]")
+    click.echo(f"  Today        : {s['completed_today']} tasks completed")
+    click.echo(f"  This week    : {s['completed_this_week']} tasks completed")
+    click.echo(f"  All time     : {s['completed_tasks']} done / {s['total_tasks']} total")
+    click.echo(f"  Pending      : {s['pending_tasks']} tasks")
+    click.echo(f"  Streak       : {streak_icon} {s['streak_days']} day(s)")
+    click.echo(f"  Avg/day      : {s['avg_per_day_last_7']} (last 7 days)\n")
 
 
 if __name__ == "__main__":

@@ -3,10 +3,19 @@ import sqlite3
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from studypet.models import Pet, Task, TaskCreate
+from studypet.models import Pet, Stats, Task, TaskCreate
 
 XP_PER_TASK = 25
 XP_PER_LEVEL = 100
+
+# (min_level, max_level, avatar_emoji, stage_name)
+_EVOLUTION: list[tuple[int, int, str, str]] = [
+    (1,  2,  "🥚", "Egg"),
+    (3,  4,  "🐣", "Hatchling"),
+    (5,  9,  "🐱", "Kitten"),
+    (10, 19, "🐯", "Tiger"),
+    (20, 999, "🐉", "Dragon"),
+]
 
 
 def get_db_path() -> str:
@@ -55,6 +64,13 @@ def _xp_to_next_level(xp: int) -> int:
     return XP_PER_LEVEL - (xp % XP_PER_LEVEL)
 
 
+def _evolution_for_level(level: int) -> tuple[str, str]:
+    for min_lv, max_lv, avatar, stage in _EVOLUTION:
+        if min_lv <= level <= max_lv:
+            return avatar, stage
+    return "🐉", "Dragon"
+
+
 def _compute_mood(conn: sqlite3.Connection) -> str:
     cutoff = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
     row = conn.execute(
@@ -82,6 +98,14 @@ def _row_to_task(row: sqlite3.Row) -> Task:
     )
 
 
+def _day_count(conn: sqlite3.Connection, start: datetime, end: datetime) -> int:
+    return conn.execute(
+        "SELECT COUNT(*) FROM tasks "
+        "WHERE completed = 1 AND completed_at >= ? AND completed_at < ?",
+        (start.isoformat(), end.isoformat()),
+    ).fetchone()[0]
+
+
 # ---------------------------------------------------------------------------
 # Pet
 # ---------------------------------------------------------------------------
@@ -89,12 +113,16 @@ def _row_to_task(row: sqlite3.Row) -> Task:
 def get_pet(conn: sqlite3.Connection) -> Pet:
     row = conn.execute("SELECT name, xp FROM pet WHERE id = 1").fetchone()
     xp = row["xp"]
+    level = _compute_level(xp)
+    avatar, stage = _evolution_for_level(level)
     return Pet(
         name=row["name"],
-        level=_compute_level(xp),
+        level=level,
         xp=xp,
         mood=_compute_mood(conn),
         xp_to_next_level=_xp_to_next_level(xp),
+        evolution_stage=stage,
+        avatar=avatar,
     )
 
 
@@ -102,6 +130,49 @@ def _award_xp(conn: sqlite3.Connection, amount: int) -> Pet:
     conn.execute("UPDATE pet SET xp = xp + ? WHERE id = 1", (amount,))
     conn.commit()
     return get_pet(conn)
+
+
+# ---------------------------------------------------------------------------
+# Stats
+# ---------------------------------------------------------------------------
+
+def get_stats(conn: sqlite3.Connection) -> Stats:
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_ago = today_start - timedelta(days=7)
+
+    total = conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0]
+    completed_total = conn.execute(
+        "SELECT COUNT(*) FROM tasks WHERE completed = 1"
+    ).fetchone()[0]
+
+    today_count = _day_count(conn, today_start, today_start + timedelta(days=1))
+
+    week_count = conn.execute(
+        "SELECT COUNT(*) FROM tasks WHERE completed = 1 AND completed_at >= ?",
+        (week_ago.isoformat(),),
+    ).fetchone()[0]
+
+    # Streak: consecutive days with at least one completion.
+    # If nothing done today yet, we start counting from yesterday.
+    streak = 0
+    offset = 0 if today_count > 0 else 1
+    for i in range(offset, 31):
+        day_s = today_start - timedelta(days=i)
+        if _day_count(conn, day_s, day_s + timedelta(days=1)) > 0:
+            streak += 1
+        else:
+            break
+
+    return Stats(
+        total_tasks=total,
+        completed_tasks=completed_total,
+        pending_tasks=total - completed_total,
+        completed_today=today_count,
+        completed_this_week=week_count,
+        streak_days=streak,
+        avg_per_day_last_7=round(week_count / 7, 1),
+    )
 
 
 # ---------------------------------------------------------------------------

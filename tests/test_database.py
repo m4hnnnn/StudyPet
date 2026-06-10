@@ -10,6 +10,7 @@ from studypet.database import (
     create_task,
     delete_task,
     get_pet,
+    get_stats,
     get_task,
     init_db,
     list_tasks,
@@ -185,3 +186,78 @@ def test_delete_task(conn):
 def test_delete_task_not_found(conn):
     with pytest.raises(ValueError, match="not found"):
         delete_task(conn, 9999)
+
+
+# ---------------------------------------------------------------------------
+# Evolution
+# ---------------------------------------------------------------------------
+
+def test_pet_evolution_egg(conn):
+    pet = get_pet(conn)
+    assert pet.evolution_stage == "Egg"
+    assert pet.avatar == "🥚"
+
+
+def test_pet_evolution_hatchling(conn):
+    # Level 3 requires 200 XP = 8 completed tasks
+    for i in range(8):
+        t = create_task(conn, TaskCreate(title=f"T{i}"))
+        complete_task(conn, t.id)
+    pet = get_pet(conn)
+    assert pet.level == 3
+    assert pet.evolution_stage == "Hatchling"
+    assert pet.avatar == "🐣"
+
+
+def test_pet_evolution_kitten(conn):
+    # Level 5 requires 400 XP = 16 completed tasks
+    for i in range(16):
+        t = create_task(conn, TaskCreate(title=f"T{i}"))
+        complete_task(conn, t.id)
+    pet = get_pet(conn)
+    assert pet.level == 5
+    assert pet.evolution_stage == "Kitten"
+    assert pet.avatar == "🐱"
+
+
+# ---------------------------------------------------------------------------
+# Stats
+# ---------------------------------------------------------------------------
+
+def test_get_stats_empty(conn):
+    s = get_stats(conn)
+    assert s.total_tasks == 0
+    assert s.completed_tasks == 0
+    assert s.pending_tasks == 0
+    assert s.completed_today == 0
+    assert s.completed_this_week == 0
+    assert s.streak_days == 0
+    assert s.avg_per_day_last_7 == 0.0
+
+
+def test_get_stats_counts(conn):
+    t1 = create_task(conn, TaskCreate(title="A"))
+    t2 = create_task(conn, TaskCreate(title="B"))
+    create_task(conn, TaskCreate(title="C"))
+    complete_task(conn, t1.id)
+    complete_task(conn, t2.id)
+    s = get_stats(conn)
+    assert s.total_tasks == 3
+    assert s.completed_tasks == 2
+    assert s.pending_tasks == 1
+    assert s.completed_today == 2
+
+
+def test_get_stats_streak(conn):
+    t = create_task(conn, TaskCreate(title="Today"))
+    complete_task(conn, t.id)
+    s = get_stats(conn)
+    assert s.streak_days == 1
+
+
+def test_get_stats_avg(conn):
+    for i in range(7):
+        t = create_task(conn, TaskCreate(title=f"T{i}"))
+        complete_task(conn, t.id)
+    s = get_stats(conn)
+    assert s.avg_per_day_last_7 == 1.0

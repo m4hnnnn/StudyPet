@@ -136,7 +136,8 @@ class StudyPetApp(App):
         filled = round((100 - to_next) / 10)
         bar = "[" + "#" * filled + "-" * (10 - filled) + "]"
         text = (
-            f"[bold]{pet['name']}[/bold]\n\n"
+            f"{pet['avatar']}  [bold]{pet['name']}[/bold]\n"
+            f"     [dim]{pet['evolution_stage']}[/dim]\n\n"
             f"Level : [cyan]{pet['level']}[/cyan]\n"
             f"XP    : {pet['xp']}\n"
             f"       {bar}\n"

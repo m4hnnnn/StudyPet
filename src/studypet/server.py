@@ -13,10 +13,11 @@ from studypet.database import (
     delete_task as db_delete_task,
     get_db_path,
     get_pet as db_get_pet,
+    get_stats as db_get_stats,
     init_db,
     list_tasks as db_list_tasks,
 )
-from studypet.models import CompleteTaskResponse, Pet, Task, TaskCreate
+from studypet.models import CompleteTaskResponse, Pet, Stats, Task, TaskCreate
 
 app = FastAPI(title="StudyPet API", version="0.1.0")
 
@@ -49,6 +50,11 @@ def get_conn() -> Generator[sqlite3.Connection, None, None]:
 @app.get("/pet", response_model=Pet)
 def get_pet(conn: sqlite3.Connection = Depends(get_conn)) -> Pet:
     return db_get_pet(conn)
+
+
+@app.get("/stats", response_model=Stats)
+def get_stats(conn: sqlite3.Connection = Depends(get_conn)) -> Stats:
+    return db_get_stats(conn)
 
 
 @app.post("/tasks", response_model=Task, status_code=201)

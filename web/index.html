@@ -19,7 +19,9 @@
     <section id="pet-card" aria-label="Pet status">
       <h2>Your Pet</h2>
 
+      <div id="pet-avatar" class="pet-avatar">🥚</div>
       <div id="pet-name" class="pet-name">Loading…</div>
+      <div id="pet-stage" class="pet-stage">Egg</div>
       <div id="pet-mood" class="mood-badge">…</div>
 
       <div class="stat-row">
@@ -58,9 +60,38 @@
       <!-- Task list -->
       <ul id="task-list"></ul>
       <p id="empty-msg" class="empty-msg hidden">No tasks here.</p>
-
-      <!-- Status / error -->
       <p id="status-msg" class="status-msg hidden"></p>
+    </section>
+
+    <!-- ── Stats ────────────────────────────── -->
+    <section id="stats-section" aria-label="Productivity stats">
+      <h2>Productivity Stats</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div id="s-today"  class="s-num">–</div>
+          <div class="s-label">Today</div>
+        </div>
+        <div class="stat-card">
+          <div id="s-week"   class="s-num">–</div>
+          <div class="s-label">This Week</div>
+        </div>
+        <div class="stat-card">
+          <div id="s-done"   class="s-num">–</div>
+          <div class="s-label">Completed</div>
+        </div>
+        <div class="stat-card">
+          <div id="s-pending" class="s-num">–</div>
+          <div class="s-label">Pending</div>
+        </div>
+        <div class="stat-card">
+          <div id="s-streak" class="s-num">–</div>
+          <div class="s-label">🔥 Streak</div>
+        </div>
+        <div class="stat-card">
+          <div id="s-avg"    class="s-num">–</div>
+          <div class="s-label">Avg / Day</div>
+        </div>
+      </div>
     </section>
 
   </main>

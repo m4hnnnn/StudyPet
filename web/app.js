@@ -1,23 +1,16 @@
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = "http://127.0.0.1:8080";
 
 let currentFilter = "";   // "" | "true" | "false"
 
 // ── API helpers ───────────────────────────────────────────────────────────
 
 async function apiFetch(method, path, body) {
-  const opts = {
-    method,
-    headers: { "Content-Type": "application/json" },
-  };
+  const opts = { method, headers: { "Content-Type": "application/json" } };
   if (body !== undefined) opts.body = JSON.stringify(body);
-
   const res = await fetch(API_URL + path, opts);
-  if (res.status === 204) return null;   // DELETE success
-
+  if (res.status === 204) return null;
   const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.detail || `HTTP ${res.status}`);
-  }
+  if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
   return data;
 }
 
@@ -33,27 +26,47 @@ async function loadPet() {
 }
 
 function renderPet(pet) {
-  document.getElementById("pet-name").textContent = pet.name;
-  document.getElementById("pet-level").textContent = pet.level;
-  document.getElementById("pet-xp").textContent = `${pet.xp} XP`;
+  document.getElementById("pet-avatar").textContent = pet.avatar;
+  document.getElementById("pet-name").textContent   = pet.name;
+  document.getElementById("pet-stage").textContent  = pet.evolution_stage;
+  document.getElementById("pet-level").textContent  = pet.level;
+  document.getElementById("pet-xp").textContent     = `${pet.xp} XP`;
 
   const badge = document.getElementById("pet-mood");
   badge.textContent = pet.mood;
   badge.className = `mood-badge mood-${pet.mood}`;
 
-  const pct = Math.round(((100 - pet.xp_to_next_level) / 100) * 100);
-  document.getElementById("xp-bar").style.width = `${Math.max(pct, 0)}%`;
+  const pct = Math.max(0, Math.round(((100 - pet.xp_to_next_level) / 100) * 100));
+  document.getElementById("xp-bar").style.width = `${pct}%`;
   document.getElementById("xp-label").textContent =
     `${pet.xp_to_next_level} XP to level ${pet.level + 1}`;
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────
+
+async function loadStats() {
+  try {
+    const s = await apiFetch("GET", "/stats");
+    renderStats(s);
+  } catch (err) {
+    // Stats failing silently is acceptable — tasks still work
+  }
+}
+
+function renderStats(s) {
+  document.getElementById("s-today").textContent   = s.completed_today;
+  document.getElementById("s-week").textContent    = s.completed_this_week;
+  document.getElementById("s-done").textContent    = s.completed_tasks;
+  document.getElementById("s-pending").textContent = s.pending_tasks;
+  document.getElementById("s-streak").textContent  = s.streak_days;
+  document.getElementById("s-avg").textContent     = s.avg_per_day_last_7;
 }
 
 // ── Tasks ─────────────────────────────────────────────────────────────────
 
 async function loadTasks() {
   try {
-    const url = currentFilter !== ""
-      ? `/tasks?completed=${currentFilter}`
-      : "/tasks";
+    const url = currentFilter !== "" ? `/tasks?completed=${currentFilter}` : "/tasks";
     const tasks = await apiFetch("GET", url);
     renderTasks(tasks);
   } catch (err) {
@@ -62,30 +75,22 @@ async function loadTasks() {
 }
 
 function renderTasks(tasks) {
-  const list = document.getElementById("task-list");
+  const list  = document.getElementById("task-list");
   const empty = document.getElementById("empty-msg");
   list.innerHTML = "";
-
-  if (tasks.length === 0) {
-    empty.classList.remove("hidden");
-    return;
-  }
+  if (tasks.length === 0) { empty.classList.remove("hidden"); return; }
   empty.classList.add("hidden");
-
-  tasks.forEach(task => list.appendChild(buildTaskItem(task)));
+  tasks.forEach(t => list.appendChild(buildTaskItem(t)));
 }
 
 function buildTaskItem(task) {
   const li = document.createElement("li");
   li.className = "task-item";
-  li.dataset.id = task.id;
 
-  // Circle check indicator
   const check = document.createElement("div");
   check.className = task.completed ? "task-check done" : "task-check";
   check.textContent = task.completed ? "✓" : "";
 
-  // Text body
   const body = document.createElement("div");
   body.className = "task-body";
 
@@ -101,7 +106,6 @@ function buildTaskItem(task) {
     body.appendChild(desc);
   }
 
-  // Action buttons
   const actions = document.createElement("div");
   actions.className = "task-actions";
 
@@ -130,12 +134,11 @@ async function handleAdd(e) {
   const title = document.getElementById("task-title").value.trim();
   const desc  = document.getElementById("task-desc").value.trim();
   if (!title) return;
-
   try {
     await apiFetch("POST", "/tasks", { title, description: desc || undefined });
     document.getElementById("task-title").value = "";
     document.getElementById("task-desc").value  = "";
-    await loadTasks();
+    await Promise.all([loadTasks(), loadStats()]);
   } catch (err) {
     showStatus(`Add failed: ${err.message}`, "error");
   }
@@ -146,7 +149,7 @@ async function handleComplete(id) {
     const data = await apiFetch("PUT", `/tasks/${id}/complete`);
     renderPet(data.pet);
     showStatus(`+${data.xp_earned} XP earned!`, "info");
-    await loadTasks();
+    await Promise.all([loadTasks(), loadStats()]);
   } catch (err) {
     showStatus(`Complete failed: ${err.message}`, "error");
   }
@@ -156,7 +159,7 @@ async function handleDelete(id, title) {
   if (!confirm(`Delete "${title}"?`)) return;
   try {
     await apiFetch("DELETE", `/tasks/${id}`);
-    await loadTasks();
+    await Promise.all([loadTasks(), loadStats()]);
   } catch (err) {
     showStatus(`Delete failed: ${err.message}`, "error");
   }
@@ -189,3 +192,4 @@ document.querySelectorAll(".filter-btn").forEach(btn => {
 
 loadPet();
 loadTasks();
+loadStats();
