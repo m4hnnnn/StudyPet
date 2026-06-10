@@ -70,10 +70,11 @@ section h2 {
 
 /* ── Pet card ────────────────────────────────── */
 .pet-avatar {
-  font-size: 3rem;
+  font-size: 3.5rem;
   text-align: center;
   margin-bottom: .4rem;
-  line-height: 1;
+  line-height: 1.2;
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
 }
 .pet-name {
   font-size: 1.4rem;
