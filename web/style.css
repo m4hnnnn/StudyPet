@@ -1,1 +1,231 @@
-/* placeholder — implemented in Phase 8 */
+/* ── Reset & variables ───────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #f5f7fa;
+  --card:      #ffffff;
+  --border:    #e2e8f0;
+  --text:      #1a202c;
+  --muted:     #718096;
+  --primary:   #4f46e5;
+  --primary-h: #4338ca;
+  --danger:    #e53e3e;
+  --danger-h:  #c53030;
+  --success:   #38a169;
+  --xp-fill:   #4f46e5;
+  --radius:    10px;
+  --shadow:    0 2px 8px rgba(0,0,0,.08);
+}
+
+/* ── Layout ──────────────────────────────────── */
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+header {
+  background: var(--primary);
+  color: #fff;
+  padding: 1.25rem 2rem;
+}
+header h1 { font-size: 1.6rem; font-weight: 700; }
+header .subtitle { font-size: .85rem; opacity: .8; margin-top: .2rem; }
+
+main {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 1.5rem;
+  max-width: 960px;
+  margin: 1.5rem auto;
+  padding: 0 1rem;
+}
+
+@media (max-width: 640px) {
+  main { grid-template-columns: 1fr; }
+}
+
+/* ── Cards ───────────────────────────────────── */
+section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  box-shadow: var(--shadow);
+}
+section h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+
+/* ── Pet card ────────────────────────────────── */
+.pet-name {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: .5rem;
+}
+
+.mood-badge {
+  display: inline-block;
+  padding: .25rem .75rem;
+  border-radius: 999px;
+  font-size: .8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: 1rem;
+  background: #e2e8f0;
+  color: var(--muted);
+}
+.mood-sad      { background: #bee3f8; color: #2b6cb0; }
+.mood-okay     { background: #fefcbf; color: #975a16; }
+.mood-happy    { background: #c6f6d5; color: #276749; }
+.mood-ecstatic { background: #e9d8fd; color: #6b46c1; }
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: .3rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.stat-label { color: var(--muted); font-size: .9rem; }
+.stat-value { font-weight: 600; }
+
+.xp-bar-wrap {
+  margin-top: .9rem;
+  height: 8px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.xp-bar {
+  height: 100%;
+  background: var(--xp-fill);
+  border-radius: 999px;
+  transition: width .4s ease;
+}
+.xp-label {
+  font-size: .75rem;
+  color: var(--muted);
+  text-align: right;
+  margin-top: .3rem;
+}
+
+/* ── Add form ────────────────────────────────── */
+#add-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-bottom: 1rem;
+}
+#add-form input {
+  flex: 1 1 160px;
+  padding: .45rem .7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: .9rem;
+  outline: none;
+  transition: border-color .15s;
+}
+#add-form input:focus { border-color: var(--primary); }
+#add-form button {
+  padding: .45rem 1rem;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+}
+#add-form button:hover { background: var(--primary-h); }
+
+/* ── Filter bar ──────────────────────────────── */
+.filter-bar {
+  display: flex;
+  gap: .4rem;
+  margin-bottom: .9rem;
+}
+.filter-btn {
+  padding: .3rem .75rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  font-size: .8rem;
+  cursor: pointer;
+  transition: all .15s;
+}
+.filter-btn:hover  { border-color: var(--primary); color: var(--primary); }
+.filter-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+/* ── Task list ───────────────────────────────── */
+#task-list { list-style: none; }
+
+.task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: .6rem;
+  padding: .6rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.task-item:last-child { border-bottom: none; }
+
+.task-check {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+  margin-top: 2px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .65rem;
+}
+.task-check.done {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+}
+
+.task-body { flex: 1; min-width: 0; }
+.task-title {
+  font-size: .9rem;
+  font-weight: 500;
+  word-break: break-word;
+}
+.task-title.done { text-decoration: line-through; color: var(--muted); }
+.task-desc { font-size: .78rem; color: var(--muted); margin-top: .1rem; }
+
+.task-actions { display: flex; gap: .3rem; flex-shrink: 0; }
+.btn-complete, .btn-delete {
+  padding: .2rem .5rem;
+  border-radius: 6px;
+  border: none;
+  font-size: .75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+}
+.btn-complete { background: #c6f6d5; color: #276749; }
+.btn-complete:hover { background: #9ae6b4; }
+.btn-delete   { background: #fed7d7; color: var(--danger); }
+.btn-delete:hover  { background: #feb2b2; }
+
+/* ── Messages ─────────────────────────────────── */
+.empty-msg  { color: var(--muted); font-size: .9rem; padding: .5rem 0; }
+.status-msg {
+  font-size: .85rem;
+  padding: .4rem .75rem;
+  border-radius: 6px;
+  margin-top: .5rem;
+}
+.status-msg.error { background: #fed7d7; color: var(--danger); }
+.status-msg.info  { background: #c6f6d5; color: #276749; }
+.hidden { display: none; }

@@ -1,1 +1,70 @@
-<!-- placeholder — implemented in Phase 8 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyPet</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <h1>StudyPet</h1>
+    <p class="subtitle">Your virtual productivity companion</p>
+  </header>
+
+  <main>
+
+    <!-- ── Pet Card ─────────────────────────── -->
+    <section id="pet-card" aria-label="Pet status">
+      <h2>Your Pet</h2>
+
+      <div id="pet-name" class="pet-name">Loading…</div>
+      <div id="pet-mood" class="mood-badge">…</div>
+
+      <div class="stat-row">
+        <span class="stat-label">Level</span>
+        <span id="pet-level" class="stat-value">–</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">XP</span>
+        <span id="pet-xp" class="stat-value">–</span>
+      </div>
+
+      <div class="xp-bar-wrap">
+        <div id="xp-bar" class="xp-bar" style="width:0%"></div>
+      </div>
+      <div id="xp-label" class="xp-label"></div>
+    </section>
+
+    <!-- ── Tasks ────────────────────────────── -->
+    <section id="tasks-section" aria-label="Tasks">
+      <h2>Tasks</h2>
+
+      <!-- Add form -->
+      <form id="add-form">
+        <input id="task-title" type="text" placeholder="Task title…" required autocomplete="off">
+        <input id="task-desc"  type="text" placeholder="Description (optional)" autocomplete="off">
+        <button type="submit">Add</button>
+      </form>
+
+      <!-- Filter bar -->
+      <div class="filter-bar" role="group" aria-label="Filter tasks">
+        <button class="filter-btn active" data-filter="">All</button>
+        <button class="filter-btn" data-filter="false">Pending</button>
+        <button class="filter-btn" data-filter="true">Done</button>
+      </div>
+
+      <!-- Task list -->
+      <ul id="task-list"></ul>
+      <p id="empty-msg" class="empty-msg hidden">No tasks here.</p>
+
+      <!-- Status / error -->
+      <p id="status-msg" class="status-msg hidden"></p>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
