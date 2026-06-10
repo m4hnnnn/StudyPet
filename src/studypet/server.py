@@ -1,10 +1,12 @@
 import os
 import sqlite3
+from pathlib import Path
 from typing import Generator, Optional
 
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, Response
 
 from studypet.database import (
     XP_PER_TASK,
@@ -27,6 +29,27 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+_WEB = Path(__file__).parent.parent.parent / "web"
+
+
+# ---------------------------------------------------------------------------
+# Web UI (served from /  so there are no cross-origin issues)
+# ---------------------------------------------------------------------------
+
+@app.get("/", include_in_schema=False)
+def index() -> HTMLResponse:
+    return HTMLResponse((_WEB / "index.html").read_text(encoding="utf-8"))
+
+
+@app.get("/style.css", include_in_schema=False)
+def style() -> Response:
+    return Response((_WEB / "style.css").read_text(encoding="utf-8"), media_type="text/css")
+
+
+@app.get("/app.js", include_in_schema=False)
+def script() -> Response:
+    return Response((_WEB / "app.js").read_text(encoding="utf-8"), media_type="application/javascript")
 
 
 # ---------------------------------------------------------------------------
