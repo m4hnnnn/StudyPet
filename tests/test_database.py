@@ -20,7 +20,7 @@ from studypet.models import TaskCreate
 @pytest.fixture
 def conn():
     """Fresh in-memory SQLite connection, fully initialized, per test."""
-    c = sqlite3.connect(":memory:")
+    c = sqlite3.connect(":memory:", check_same_thread=False)
     c.row_factory = sqlite3.Row
     init_db(c)
     yield c
