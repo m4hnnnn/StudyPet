@@ -1,6 +1,6 @@
 # StudyPet
 
-A virtual pet productivity tracker. Add tasks, complete them, earn XP, level up your pet, and watch its mood shift based on how productive you've been.
+A virtual pet productivity tracker built in Python. Add tasks, complete them, earn XP, level up your pet, and watch its mood shift based on how productive you've been.
 
 ## Architecture
 
@@ -12,15 +12,20 @@ graph TD
         TUI[TUI Client<br/>Textual + httpx]
     end
 
-    subgraph Server
-        API[FastAPI REST Server<br/>studypet/server.py]
-        DB[SQLite Database<br/>studypet/database.py]
+    subgraph Server ["API Server (FastAPI + Uvicorn)"]
+        API[Route Handlers<br/>server.py]
+        DB[SQLite Layer<br/>database.py]
+        MDL[Pydantic Models<br/>models.py]
     end
+
+    SQLITE[(SQLite<br/>studypet.db)]
 
     WEB -->|HTTP/JSON| API
     CLI -->|HTTP/JSON| API
     TUI -->|HTTP/JSON| API
+    API --> MDL
     API --> DB
+    DB --> SQLITE
 ```
 
 All three clients communicate **only** through the REST API — no client touches SQLite directly.
@@ -29,15 +34,29 @@ All three clients communicate **only** through the REST API — no client touche
 
 ```
 StudyPet/
-├── src/studypet/        # Server package
-│   ├── models.py        # Pydantic models
-│   ├── database.py      # SQLite layer
-│   └── server.py        # FastAPI app
-├── cli/cli.py           # CLI client (Click + httpx)
-├── tui/tui.py           # TUI client (Textual + httpx)
-├── web/                 # Web client (HTML/CSS/JS)
-├── tests/               # pytest test suite
-└── docs/                # Documentation
+├── src/studypet/
+│   ├── models.py        # Pydantic v2 models (Task, Pet, etc.)
+│   ├── database.py      # SQLite layer (all DB logic lives here)
+│   └── server.py        # FastAPI app + route handlers
+├── cli/
+│   └── cli.py           # CLI client — Click + httpx
+├── tui/
+│   └── tui.py           # TUI client — Textual + httpx
+├── web/
+│   ├── index.html       # Web client markup
+│   ├── style.css        # Styles
+│   └── app.js           # Fetch-based API client
+├── tests/
+│   ├── test_database.py # 19 database-layer tests
+│   └── test_server.py   # 14 API endpoint tests
+├── docs/
+│   ├── requirements.md
+│   ├── architecture.md
+│   ├── architecture.mmd
+│   ├── api.md
+│   └── testing-plan.md
+├── pyproject.toml
+└── CLAUDE.md
 ```
 
 ## Quick Start
@@ -45,19 +64,22 @@ StudyPet/
 **Requirements:** Python 3.11+, [uv](https://docs.astral.sh/uv/)
 
 ```bash
-# Install dependencies
+# 1. Install all dependencies
 uv sync
 
-# Start the API server (default: http://localhost:8000)
+# 2. Start the API server  (http://127.0.0.1:8000)
 uv run studypet-server
 
-# In a second terminal — use the CLI
+# 3. Choose a client — open a second terminal for each:
+
+# CLI
 uv run studypet-cli --help
 
-# Or launch the TUI
+# TUI
 uv run studypet-tui
 
-# Or open web/index.html in your browser
+# Web — open this file in any browser (server must be running)
+web/index.html
 ```
 
 ## API Endpoints
@@ -66,34 +88,84 @@ uv run studypet-tui
 |--------|----------|-------------|
 | GET | `/pet` | Get pet status (name, level, XP, mood) |
 | POST | `/tasks` | Create a new task |
-| GET | `/tasks` | List all tasks |
+| GET | `/tasks` | List all tasks (`?completed=true/false` to filter) |
 | PUT | `/tasks/{id}/complete` | Complete a task and earn XP |
 | DELETE | `/tasks/{id}` | Delete a task |
 
-See [docs/api.md](docs/api.md) for full request/response details.
+Interactive docs available at `http://127.0.0.1:8000/docs` when the server is running.
+Full reference: [docs/api.md](docs/api.md)
+
+## CLI Commands
+
+```bash
+uv run studypet-cli pet                        # show pet status
+uv run studypet-cli tasks                      # list all tasks
+uv run studypet-cli tasks --completed false    # pending only
+uv run studypet-cli tasks --completed true     # completed only
+uv run studypet-cli add "Title" -d "Desc"      # add a task
+uv run studypet-cli complete <id>              # complete a task
+uv run studypet-cli delete <id>               # delete a task
+```
+
+## TUI Keybindings
+
+| Key | Action |
+|-----|--------|
+| `c` | Complete selected task |
+| `d` | Delete selected task |
+| `r` | Refresh pet and tasks |
+| `q` | Quit |
 
 ## Pet Mechanics
 
 - Each completed task awards **25 XP**
 - **Level** = `(total XP // 100) + 1`
-- **Mood** is based on tasks completed in the last 24 hours:
-  - 0 tasks → 😢 sad
-  - 1–2 tasks → 😐 okay
-  - 3–4 tasks → 😊 happy
-  - 5+ tasks → 🤩 ecstatic
+- **Mood** is computed from tasks completed in the last 24 hours:
+
+| Tasks today | Mood |
+|-------------|------|
+| 0 | sad |
+| 1–2 | okay |
+| 3–4 | happy |
+| 5+ | ecstatic |
 
 ## Running Tests
 
 ```bash
-uv run pytest
-uv run pytest -v          # verbose
-uv run pytest tests/test_database.py   # single file
+uv run pytest                          # all 33 tests
+uv run pytest -v                       # verbose output
+uv run pytest tests/test_database.py  # 19 database-layer tests
+uv run pytest tests/test_server.py    # 14 API endpoint tests
 ```
+
+Tests use in-memory SQLite — no running server needed, no test files left on disk.
+
+## Environment Variables
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `STUDYPET_URL` | `http://127.0.0.1:8000` | API base URL for CLI and TUI clients |
+| `STUDYPET_DB` | `studypet.db` | Path to the SQLite database file |
+| `STUDYPET_HOST` | `127.0.0.1` | Host the server binds to |
+| `STUDYPET_PORT` | `8000` | Port the server listens on |
+
+## Dependencies
+
+| Package | Purpose |
+|---------|---------|
+| `fastapi` + `uvicorn` | REST API server |
+| `pydantic` | Request/response models |
+| `httpx` / `httpx2` | HTTP client for CLI and TUI |
+| `click` | CLI framework |
+| `textual` | Terminal UI framework |
+| `pytest` | Test runner |
+
+All managed by [uv](https://docs.astral.sh/uv/) via `pyproject.toml`.
 
 ## My Questions
 
 1. **How does AI assistance change the way developers learn and understand code?**
-   When AI tools write or suggest code, developers can move faster — but there's a risk of accepting code without fully understanding it. In building StudyPet, I noticed that AI suggestions were most helpful when I already understood the problem well enough to evaluate them critically. This raises the question: does AI assistance strengthen or weaken deep understanding over time, and how should CS education adapt to this reality?
+   When AI tools write or suggest code, developers can move faster — but there is a risk of accepting code without fully understanding it. Building StudyPet with AI assistance made me realise that the suggestions were most useful when I already understood the problem well enough to evaluate them critically. I had to catch real bugs (a SQLite thread-safety error, a Windows encoding crash) that the AI did not anticipate. This raises the question: does AI assistance strengthen or weaken deep understanding over time, and how should CS education adapt to keep the focus on reasoning rather than generation?
 
 2. **Where should the line be drawn between AI-generated code and a student's own work?**
-   AI-assisted development is now unavoidable in industry, yet academic integrity policies haven't fully caught up. For a project like StudyPet, the architecture decisions, debugging, integration work, and understanding of *why* the code works are genuinely mine — even if AI helped write boilerplate. How should instructors evaluate "authorship" when AI is part of the toolchain, and what skills should be prioritized in assessment?
+   AI-assisted development is now unavoidable in industry, yet academic integrity policies have not fully caught up. For a project like StudyPet, the architecture decisions, debugging, integration work, and understanding of *why* the code works are genuinely mine — even if AI helped produce boilerplate. The interesting authorship question is not whether AI was used, but whether the student can explain every decision, fix every bug, and extend the system independently. How should instructors design assessments that test that kind of ownership rather than just checking whether code was written by hand?
