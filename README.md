@@ -161,11 +161,3 @@ Tests use in-memory SQLite — no running server needed, no test files left on d
 | `pytest` | Test runner |
 
 All managed by [uv](https://docs.astral.sh/uv/) via `pyproject.toml`.
-
-## My Questions
-
-1. **How does AI assistance change the way developers learn and understand code?**
-   When AI tools write or suggest code, developers can move faster — but there is a risk of accepting code without fully understanding it. Building StudyPet with AI assistance made me realise that the suggestions were most useful when I already understood the problem well enough to evaluate them critically. I had to catch real bugs (a SQLite thread-safety error, a Windows encoding crash) that the AI did not anticipate. This raises the question: does AI assistance strengthen or weaken deep understanding over time, and how should CS education adapt to keep the focus on reasoning rather than generation?
-
-2. **Where should the line be drawn between AI-generated code and a student's own work?**
-   AI-assisted development is now unavoidable in industry, yet academic integrity policies have not fully caught up. For a project like StudyPet, the architecture decisions, debugging, integration work, and understanding of *why* the code works are genuinely mine — even if AI helped produce boilerplate. The interesting authorship question is not whether AI was used, but whether the student can explain every decision, fix every bug, and extend the system independently. How should instructors design assessments that test that kind of ownership rather than just checking whether code was written by hand?
